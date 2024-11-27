@@ -18,12 +18,12 @@ label_encoder = LabelEncoder()
 for col in ['Flow ID', 'Src IP', 'Src Port', 'Dst IP', 'Dst Port', 'Protocol']:
     data[col] = label_encoder.fit_transform(data[col])
 
-# Convert ports and timestamp if necessary (ensure the ports are numeric)
+# Convert ports if necessary
 data['Src Port'] = pd.to_numeric(data['Src Port'], errors='coerce').fillna(0).astype(int)
 data['Dst Port'] = pd.to_numeric(data['Dst Port'], errors='coerce').fillna(0).astype(int)
 
-# Randomly assign 'Label' column (this can be adjusted to match your use case)
-data['Label'] = random.choice([0, 1])
+# Randomly assign 'Label' column for demonstration (replace with real labels if available)
+data['Label'] = [random.choice([0, 1]) for _ in range(len(data))]
 
 # Separate features and target
 X = data.drop('Label', axis=1)
@@ -33,5 +33,6 @@ y = data['Label']
 info_gain = mutual_info_classif(X, y, random_state=42)
 feature_info = pd.DataFrame({'Feature': X.columns, 'Information Gain': info_gain})
 
+# Sort features by descending information gain
 sorted_features = feature_info.sort_values(by='Information Gain', ascending=False)
 print(sorted_features)
