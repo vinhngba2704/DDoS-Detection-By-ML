@@ -1,7 +1,6 @@
 import csv
 import re
 import statistics
-from collections import defaultdict
 
 # Input and output file paths
 input_file = '/home/ubuntu/year3/group_project/ddostracr_135436.csv'
@@ -13,7 +12,9 @@ output_header = [
     'Duration', 'Total Packets', 'Total Length', 'Packet Length Min', 'Packet Length Max',
     'Flow Bytes/s', 'Flow Packets/s', 'Flow IAT Mean', 'Flow IAT Std', 'Flow IAT Max',
     'Flow IAT Min', 'Flow IAT Total', 'FIN Flag Count', 'SYN Flag Count', 'RST Flag Count',
-    'PSH Flag Count', 'ACK Flag Count', 'URG Flag Count', 'CWR Flag Count', 'ECE Flag Count'
+    'PSH Flag Count', 'ACK Flag Count', 'URG Flag Count', 'CWR Flag Count', 'ECE Flag Count',
+    'Fwd Length Mean', 'Fwd Length Std', 'Bwd Length Mean', 'Bwd Length Std',
+    'Active Mean', 'Active Std', 'Idle Mean', 'Idle Std'
 ]
 
 # Regex for filtering TCP tags in the 'Info' column
@@ -70,7 +71,12 @@ with open(input_file, mode='r') as infile:
                 'min_length': length,
                 'max_length': length,
                 'timestamps': [timestamp],
-                'flags': flags
+                'flags': flags,
+                'fwd_lengths': [length] if src_ip == row['Source'] else [],
+                'bwd_lengths': [length] if src_ip != row['Source'] else [],
+                'active_periods': [],
+                'idle_periods': [],
+                'last_timestamp': timestamp
             }
         else:
             flow = flows[unique_key]
@@ -83,6 +89,20 @@ with open(input_file, mode='r') as infile:
             flow['timestamps'].append(timestamp)
             for flag, count in flags.items():
                 flow['flags'][flag] += count
+
+            # Track packet direction
+            if src_ip == row['Source']:
+                flow['fwd_lengths'].append(length)
+            else:
+                flow['bwd_lengths'].append(length)
+
+            # Calculate active/idle times
+            active_time = timestamp - flow['last_timestamp']
+            if active_time > 0:
+                flow['active_periods'].append(active_time)
+            else:
+                flow['idle_periods'].append(-active_time)
+            flow['last_timestamp'] = timestamp
 
 # Prepare rows for writing to output
 rows = []
@@ -101,12 +121,28 @@ for flow in flows.values():
     iat_min = min(iats) if iats else 0
     iat_total = sum(iats)
 
+    # Calculate forward/backward stats
+    fwd_lengths = flow['fwd_lengths']
+    bwd_lengths = flow['bwd_lengths']
+    active_periods = flow['active_periods']
+    idle_periods = flow['idle_periods']
+
+    fwd_mean = statistics.mean(fwd_lengths) if fwd_lengths else 0
+    fwd_std = statistics.stdev(fwd_lengths) if len(fwd_lengths) > 1 else 0
+    bwd_mean = statistics.mean(bwd_lengths) if bwd_lengths else 0
+    bwd_std = statistics.stdev(bwd_lengths) if len(bwd_lengths) > 1 else 0
+    active_mean = statistics.mean(active_periods) if active_periods else 0
+    active_std = statistics.stdev(active_periods) if len(active_periods) > 1 else 0
+    idle_mean = statistics.mean(idle_periods) if idle_periods else 0
+    idle_std = statistics.stdev(idle_periods) if len(idle_periods) > 1 else 0
+
     rows.append([
         flow['flow_id'], flow['src_ip'], flow['src_port'], flow['dst_ip'], flow['dst_port'], flow['protocol'],
         duration, flow['total_packets'], flow['total_length'], flow['min_length'], flow['max_length'],
         flow_bytes_per_s, flow_packets_per_s, iat_mean, iat_std, iat_max, iat_min, iat_total,
         flow['flags']['FIN'], flow['flags']['SYN'], flow['flags']['RST'], flow['flags']['PSH'],
-        flow['flags']['ACK'], flow['flags']['URG'], flow['flags']['CWR'], flow['flags']['ECE']
+        flow['flags']['ACK'], flow['flags']['URG'], flow['flags']['CWR'], flow['flags']['ECE'],
+        fwd_mean, fwd_std, bwd_mean, bwd_std, active_mean, active_std, idle_mean, idle_std
     ])
 
 rows.sort(key=lambda x: x[0])
