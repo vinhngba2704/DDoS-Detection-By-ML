@@ -1,10 +1,9 @@
 import csv
 import re
 import statistics
-from datetime import datetime
 
 # Input and output file paths
-input_file = '/home/ubuntu/year3/group_project/converted_flow_features.csv'
+input_file = '/home/ubuntu/year3/group_project/internal_pcap1(FULL_Attacker).csv'
 output_file = '/home/ubuntu/year3/group_project/extracted_flow_features.csv'
 
 # Updated header for the output file (columns removed)
@@ -14,35 +13,22 @@ output_header = [
     'Flow Bytes/s', 'Flow Packets/s', 'Flow IAT Mean', 'Flow IAT Std', 'Flow IAT Max',
     'Flow IAT Min', 'Flow IAT Total', 'FIN Flag Count', 'SYN Flag Count', 'RST Flag Count',
     'PSH Flag Count', 'ACK Flag Count', 'URG Flag Count', 'CWR Flag Count', 'ECE Flag Count',
-    'Active Mean', 'Active Std', 'Idle Mean', 'Idle Std','label'
+    'Active Mean', 'Active Std', 'Idle Mean', 'Idle Std','Label'
 ]
 
+# Regex for filtering TCP tags in the 'Info' column
 tcp_tags = r'\[(TCP Retransmission|TCP Out-Of-Order|TCP Previous segment not captured)\]'
 tcp_flags = ['FIN', 'SYN', 'RST', 'PSH', 'ACK', 'URG', 'CWR', 'ECE']
 
-
-def parse_timestamp(timestamp_str):
-    timestamp_str = timestamp_str.strip('[]')  # Remove square brackets
-    try:
-        dt_object = datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S.%f')
-    except ValueError:
-        dt_object = datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
-    seconds_since_midnight = (dt_object - dt_object.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
-    return seconds_since_midnight
-
+# Function to extract features from a single row
 def extract_features(row):
     src_ip = row['Source']
     dst_ip = row['Destination']
     protocol = row['Protocol']
-    timestamp = parse_timestamp(row['Time'])  
-    try:
-        length = int(float(row['Length']))
-    except ValueError:
-        length = 0 
-
+    timestamp = float(row['Time'])
+    length = int(row['Length'])
     flags = {flag: int(row['Info'].count(flag)) for flag in tcp_flags}  # Count TCP flags
-    label = row['label'].strip()  
-
+   
     info_example = re.sub(tcp_tags, '', row['Info']).strip() if 'Info' in row else ''
     src_port, dst_port = 'Unknown', 'Unknown'
 
@@ -58,14 +44,15 @@ def extract_features(row):
         src_port, dst_port = 0, 0
 
     flow_id = f"{src_ip}-{dst_ip}-{src_port}-{dst_port}-{protocol}"
-    return flow_id, src_ip, src_port, dst_ip, dst_port, protocol, timestamp, length, flags, label
+    return flow_id, src_ip, src_port, dst_ip, dst_port, protocol, timestamp, length, flags
 
+# Dictionary to store flows
 flows = {}
 
 with open(input_file, mode='r') as infile:
     reader = csv.DictReader(infile)
     for row in reader:
-        flow_id, src_ip, src_port, dst_ip, dst_port, protocol, timestamp, length, flags, label = extract_features(row)
+        flow_id, src_ip, src_port, dst_ip, dst_port, protocol, timestamp, length, flags = extract_features(row)
         unique_key = (src_ip, src_port, dst_ip, dst_port, protocol)
 
         if unique_key not in flows:
@@ -86,8 +73,7 @@ with open(input_file, mode='r') as infile:
                 'flags': flags,
                 'active_periods': [],
                 'idle_periods': [],
-                'last_timestamp': timestamp,
-                'label': label 
+                'last_timestamp': timestamp
             }
         else:
             flow = flows[unique_key]
@@ -101,11 +87,7 @@ with open(input_file, mode='r') as infile:
             for flag, count in flags.items():
                 flow['flags'][flag] += count
 
-            if label == 'BENIGN':
-                flow['label'] = 'benign'
-            else:
-                flow['label'] = 'attacker'
-
+            # Calculate active/idle times
             active_time = timestamp - flow['last_timestamp']
             if active_time > 0:
                 flow['active_periods'].append(active_time)
@@ -113,12 +95,14 @@ with open(input_file, mode='r') as infile:
                 flow['idle_periods'].append(-active_time)
             flow['last_timestamp'] = timestamp
 
+# Prepare rows for writing to output
 rows = []
 for flow in flows.values():
     duration = flow['end_time'] - flow['start_time']
     flow_bytes_per_s = flow['total_length'] / duration if duration > 0 else 0
     flow_packets_per_s = flow['total_packets'] / duration if duration > 0 else 0
 
+    # Calculate inter-arrival times (IATs)
     timestamps = sorted(flow['timestamps'])
     iats = [timestamps[i] - timestamps[i - 1] for i in range(1, len(timestamps))]
 
@@ -142,7 +126,7 @@ for flow in flows.values():
         flow_bytes_per_s, flow_packets_per_s, iat_mean, iat_std, iat_max, iat_min, iat_total,
         flow['flags']['FIN'], flow['flags']['SYN'], flow['flags']['RST'], flow['flags']['PSH'],
         flow['flags']['ACK'], flow['flags']['URG'], flow['flags']['CWR'], flow['flags']['ECE'],
-        active_mean, active_std, idle_mean, idle_std, flow['label']
+        active_mean, active_std, idle_mean, idle_std
     ])
 
 rows.sort(key=lambda x: x[0])
