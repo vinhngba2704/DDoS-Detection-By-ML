@@ -102,9 +102,9 @@ with open(input_file, mode='r') as infile:
                 flow['flags'][flag] += count
 
             if label == 'BENIGN':
-                flow['label'] = 'benign'
+                flow['label'] = 'BENIGN'
             else:
-                flow['label'] = 'attacker'
+                flow['label'] = 'UDP'
 
             active_time = timestamp - flow['last_timestamp']
             if active_time > 0:
