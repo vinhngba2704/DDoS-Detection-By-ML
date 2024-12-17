@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score
 import pandas as pd
+from torch.nn import init
 
 data = pd.read_csv("top_10_features.csv")
 
@@ -26,16 +27,26 @@ class ANN(nn.Module):
     def __init__(self):
         super(ANN, self).__init__()
         self.fc1 = nn.Linear(10,16)
+        self.bn1 = nn.BatchNorm1d(16)
         self.fc2 = nn.Linear(16,8)
+        self.bn2 = nn.BatchNorm1d(8)
         self.fc3 = nn.Linear(8,1)
-        self.relu = nn.ReLU()
-        self.sigmoid = nn.Sigmoid()
 
-    def forward(self, X):
-        X = self.relu(self.fc1(X))
-        X = self.relu(self.fc2(X))
-        X = self.sigmoid(self.fc3(X))
-        return X
+        init.kaiming_uniform(self.fc1.weight)
+        init.kaiming_uniform(self.fc2.weight)
+        init.kaiming_uniform(self.fc3.weight)
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.bn1(x)
+        x = nn.functional.relu(x)
+
+        x = self.fc2(x)
+        x = self.bn2(x)
+        x = nn.functional.relu(x)
+
+        x = nn.functional.sigmoid(self.fc3(x))
+        return x
 
 model = ANN()
 criterion = nn.BCELoss()
@@ -49,22 +60,19 @@ for epoch in range(epochs):
         X_batch = X_train_tensor[i:i+batch_size]
         y_batch = y_train_tensor[i:i+batch_size]
         
-        # Forward pass
         outputs = model(X_batch)
         loss = criterion(outputs, y_batch)
         
-        # Backward pass and optimization
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
     
     print(f"Epoch {epoch+1}/{epochs}, Loss: {loss.item():.4f}")
 
-# Evaluate the model
 model.eval()
 with torch.no_grad():
     y_pred = model(X_test_tensor)
-    y_pred_class = (y_pred >= 0.5).float()  # Convert probabilities to binary predictions
+    y_pred_class = (y_pred >= 0.5).float() 
     accuracy = accuracy_score(y_test, y_pred_class.numpy())
     print(f"Test Accuracy: {accuracy * 100:.2f}%")
 
