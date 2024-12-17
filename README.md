@@ -1,4 +1,4 @@
-# GroupProject
+# Instruction
 
 Step by step to run program:
 1. run convert_tool ( convert Cicflowmeter file to 7 basics features file )
