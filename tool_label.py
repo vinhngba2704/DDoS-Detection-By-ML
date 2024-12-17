@@ -4,8 +4,8 @@ import statistics
 from datetime import datetime
 
 # Input and output file paths
-input_file = 'ForGit/DDoS-Detection-By-ML/feature_extraction/converted_flow_features.csv'
-output_file = 'ForGit/DDoS-Detection-By-ML/feature_extraction/extracted_flow_features.csv'
+input_file = '/home/ubuntu/DDoS-Detection-By-ML/converted_flow_features.csv'
+output_file = '/home/ubuntu/DDoS-Detection-By-ML/extracted_flow_features.csv'
 
 # Updated header for the output file (columns removed)
 output_header = [

@@ -1,7 +1,7 @@
 import pandas as pd
 
-input_file = 'ForGit/DDoS-Detection-By-ML/feature_extraction/LDAP-training.csv'
-output_file = 'ForGit/DDoS-Detection-By-ML/feature_extraction/converted_flow_features.csv'
+input_file = '/home/ubuntu/DDoS-Detection-By-ML/LDAP-training.csv'
+output_file = '/home/ubuntu/DDoS-Detection-By-ML/converted_flow_features.csv'
 
 column_mapping = {
     " Source IP": "Source",

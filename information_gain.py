@@ -4,7 +4,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.feature_selection import mutual_info_classif
 
 # Load dataset
-data = pd.read_csv('/home/ubuntu/year3/group_project/extracted_flow_features.csv')
+data = pd.read_csv('/home/ubuntu/DDoS-Detection-By-ML/extracted_flow_features.csv')
 
 # Drop flag columns 
 flag_columns = [
@@ -38,7 +38,7 @@ top_features = sorted_features.head(10)['Feature'].tolist()
 top_features_data = data[top_features + ['label']]
 
 # Save the new DataFrame to a CSV file
-output_path = '/home/ubuntu/year3/group_project/top_10_features.csv'
+output_path = '/home/ubuntu/DDoS-Detection-By-ML/top_10_features.csv'
 top_features_data.to_csv(output_path, index=False)
 
 print(f"CSV with top 10 features saved to: {output_path}")
