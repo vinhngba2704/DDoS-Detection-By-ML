@@ -3,8 +3,8 @@ import re
 import statistics
 
 # Input and output file paths
-input_file = '/home/ubuntu/year3/group_project/internal_pcap1(FULL_Attacker).csv'
-output_file = '/home/ubuntu/year3/group_project/extracted_flow_features.csv'
+input_file = '/home/ubuntu/DDoS-Detection-By-ML/pcap_file/firewall/fw2.csv'
+output_file = '/home/ubuntu/DDoS-Detection-By-ML/output/extracted_flow_features.csv'
 
 # Updated header for the output file (columns removed)
 output_header = [
@@ -13,7 +13,7 @@ output_header = [
     'Flow Bytes/s', 'Flow Packets/s', 'Flow IAT Mean', 'Flow IAT Std', 'Flow IAT Max',
     'Flow IAT Min', 'Flow IAT Total', 'FIN Flag Count', 'SYN Flag Count', 'RST Flag Count',
     'PSH Flag Count', 'ACK Flag Count', 'URG Flag Count', 'CWR Flag Count', 'ECE Flag Count',
-    'Active Mean', 'Active Std', 'Idle Mean', 'Idle Std','Label'
+    'Active Mean', 'Active Std', 'Idle Mean', 'Idle Std'
 ]
 
 # Regex for filtering TCP tags in the 'Info' column
