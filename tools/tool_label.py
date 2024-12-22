@@ -4,7 +4,7 @@ import statistics
 from datetime import datetime
 
 # Input and output file paths
-input_file = '/home/ubuntu/DDoS-Detection-By-ML/converted_flow_features.csv'
+input_file = '/home/ubuntu/DDoS-Detection-By-ML/pcap_file/firewall/updated_fw2.csv'
 output_file = '/home/ubuntu/DDoS-Detection-By-ML/extracted_flow_features.csv'
 
 # Updated header for the output file (columns removed)

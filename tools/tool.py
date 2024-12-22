@@ -3,7 +3,7 @@ import re
 import statistics
 
 # Input and output file paths
-input_file = '/home/ubuntu/DDoS-Detection-By-ML/pcap_file/firewall/fw2.csv'
+input_file = '/home/ubuntu/DDoS-Detection-By-ML/pcap_file/firewall/updated_fw2.csv'
 output_file = '/home/ubuntu/DDoS-Detection-By-ML/output/extracted_flow_features.csv'
 
 # Updated header for the output file (columns removed)
@@ -13,7 +13,7 @@ output_header = [
     'Flow Bytes/s', 'Flow Packets/s', 'Flow IAT Mean', 'Flow IAT Std', 'Flow IAT Max',
     'Flow IAT Min', 'Flow IAT Total', 'FIN Flag Count', 'SYN Flag Count', 'RST Flag Count',
     'PSH Flag Count', 'ACK Flag Count', 'URG Flag Count', 'CWR Flag Count', 'ECE Flag Count',
-    'Active Mean', 'Active Std', 'Idle Mean', 'Idle Std'
+    'Active Mean', 'Active Std', 'Idle Mean', 'Idle Std','label'
 ]
 
 # Regex for filtering TCP tags in the 'Info' column
@@ -28,7 +28,8 @@ def extract_features(row):
     timestamp = float(row['Time'])
     length = int(row['Length'])
     flags = {flag: int(row['Info'].count(flag)) for flag in tcp_flags}  # Count TCP flags
-   
+    label = row['label'].strip()  
+
     info_example = re.sub(tcp_tags, '', row['Info']).strip() if 'Info' in row else ''
     src_port, dst_port = 'Unknown', 'Unknown'
 
@@ -44,7 +45,7 @@ def extract_features(row):
         src_port, dst_port = 0, 0
 
     flow_id = f"{src_ip}-{dst_ip}-{src_port}-{dst_port}-{protocol}"
-    return flow_id, src_ip, src_port, dst_ip, dst_port, protocol, timestamp, length, flags
+    return flow_id, src_ip, src_port, dst_ip, dst_port, protocol, timestamp, length, flags, label
 
 # Dictionary to store flows
 flows = {}
@@ -52,7 +53,7 @@ flows = {}
 with open(input_file, mode='r') as infile:
     reader = csv.DictReader(infile)
     for row in reader:
-        flow_id, src_ip, src_port, dst_ip, dst_port, protocol, timestamp, length, flags = extract_features(row)
+        flow_id, src_ip, src_port, dst_ip, dst_port, protocol, timestamp, length, flags, label = extract_features(row)
         unique_key = (src_ip, src_port, dst_ip, dst_port, protocol)
 
         if unique_key not in flows:
@@ -73,7 +74,9 @@ with open(input_file, mode='r') as infile:
                 'flags': flags,
                 'active_periods': [],
                 'idle_periods': [],
-                'last_timestamp': timestamp
+                'last_timestamp': timestamp,
+                'label': label 
+
             }
         else:
             flow = flows[unique_key]
@@ -86,6 +89,11 @@ with open(input_file, mode='r') as infile:
             flow['timestamps'].append(timestamp)
             for flag, count in flags.items():
                 flow['flags'][flag] += count
+
+            if label == 'BENIGN':
+                flow['label'] = 'BENIGN'
+            else:
+                flow['label'] = 'ATTACKER'
 
             # Calculate active/idle times
             active_time = timestamp - flow['last_timestamp']
@@ -126,7 +134,7 @@ for flow in flows.values():
         flow_bytes_per_s, flow_packets_per_s, iat_mean, iat_std, iat_max, iat_min, iat_total,
         flow['flags']['FIN'], flow['flags']['SYN'], flow['flags']['RST'], flow['flags']['PSH'],
         flow['flags']['ACK'], flow['flags']['URG'], flow['flags']['CWR'], flow['flags']['ECE'],
-        active_mean, active_std, idle_mean, idle_std
+        active_mean, active_std, idle_mean, idle_std, flow['label']
     ])
 
 rows.sort(key=lambda x: x[0])
