@@ -23,6 +23,7 @@ read_and_add_ips(){
     fi
 
     #Reading each line in file
+    echo "-------------------------------------------------------------------"
     echo "Reading file $file"
     while read -r ip; do 
         #Pass if line is empty or is "nan"
@@ -32,7 +33,6 @@ read_and_add_ips(){
         #if the IP already exist in set it will reset the timeout 
         sudo ipset add $ipset_name $ip -exist
         echo "Added $ip to the blacklist"
-    echo "-------------------------------------------------------------------"
     done < "$file"
 }
 
