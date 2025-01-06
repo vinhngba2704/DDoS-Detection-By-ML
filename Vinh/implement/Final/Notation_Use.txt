@@ -1,0 +1,32 @@
+- Reconstructure to research part and implement part
+    + research part:
+        - previous code for research: extracting, labeling, testing with model:
+            + Logistic Regression
+            + Random Forest
+            + SVM
+        - evaluate accuracy for these model
+    + implement part:
+        - Folder model:
+            + model_initialization:
+                - Transforming from pcap to csv (Please modify the path of pcap file before using further)
+                - Extracting to 30 features,
+                - Labeling (+1 feature "label")
+                - Preprocessing: remove unneeded columns('Flow ID', 'Src IP', 'Src Port', 'Dst IP', 'Dst Port'), encoding categorical columns
+                - Training model (Random Forest) and output file model.joblib
+                ** To modify model_initialization process:
+                    ** Please modify the python file model_initialization.py (changing model, ...)
+                ** To run model_initialization process:
+                    ** Please running the <<model_initialization.sh>>
+            + model in_working:
+                - Writing python file to load initialized model, predict label (ATTACKER / BENIGN), and output attacker ip addresses to csv file
+            + system:
+                - The entire system to run:
+                    + Capturing pcap file for each 5s
+                    + Performing batch process for each pcap file in 5s:
+                        - Transforming to csv file
+                        - Extracting to csv file (30 features)
+                        - Preprocessing (removing, encoding)
+                        - Predicting with model
+                        - Outputing attacker ip to
+                ** To run the system:
+                    ** Please running the <<core_instructions.sh>>
