@@ -1,23 +1,12 @@
 # Define directory and files
-export PCAP_DIR="./temp_storage/traffic"
-export CSV_DIR="./temp_storage/csv"
-export CSV_EXTRACTED_DIR="./temp_storage/csv_extracted"
-export CSV_PREPROCESSED_DIR="./temp_storage/csv_preprocessed"
-export CSV_ATTACKER_IPS_DIR="./temp_storage/csv_attacker_ips"
+export PCAP_DIR="./temp_storage/traffic" # Store raw PCAP files
+export CSV_DIR="./temp_storage/csv" # STore CSV files
+export CSV_EXTRACTED_DIR="./temp_storage/csv_extracted" # Store extracted CSV files
+export CSV_PREPROCESSED_DIR="./temp_storage/csv_preprocessed" # Store preprocessed CSV files
+export CSV_ATTACKER_IPS_DIR="./temp_storage/csv_attacker_ips" # Store attacker IP address CSV files
 
-# For tcpdump
-NETWORK_INTERFACE=wlp0s20f3
-
-# Create directory to store raw pcap files
-mkdir -p $PCAP_DIR
-# Create directory to store csv files
-mkdir -p $CSV_DIR
-# Create directory to store extracted csv files
-mkdir -p $CSV_EXTRACTED_DIR
-# Create directory to store preprocessed csv files
-mkdir -p $CSV_PREPROCESSED_DIR
-# Create directory to store attacker ip address csv files
-mkdir -p $CSV_ATTACKER_IPS_DIR
+# Create directories
+mkdir -p $PCAP_DIR $CSV_DIR $CSV_EXTRACTED_DIR $CSV_PREPROCESSED_DIR $CSV_ATTACKER_IPS_DIR
 
 while FILE=$(inotifywait -e close_write --format "%w%f" "$PCAP_DIR"); do
     BASENAME=$(basename "$FILE" .pcap)
@@ -39,7 +28,7 @@ while FILE=$(inotifywait -e close_write --format "%w%f" "$PCAP_DIR"); do
     export CSV_PREPROCESSED_BRIDGE=$(python preprocessing.py)
 
     # Predict the label of the csv file (30 features)
-    python model_inworking.py
+    python3 model_inworking.py
     if [[ $? -ne 0 ]]; then
         echo "Error: Model prediction failed for ${CSV_PREPROCESSED_BRIDGE}."
         continue
@@ -48,6 +37,13 @@ while FILE=$(inotifywait -e close_write --format "%w%f" "$PCAP_DIR"); do
     echo "Processing for ${BASENAME} completed successfully."
 
 done &
+
+# For tcpdump
+if [[ $# -eq 1 ]]; then 
+	NETWORK_INTERFACE=$1
+else
+	NETWORK_INTERFACE=eth0
+fi
 
 # Capture packets from a network interface every 5s
 echo "Start capturing packets from network interface $NETWORK_INTERFACE"
