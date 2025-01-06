@@ -24,6 +24,7 @@ read_and_add_ips(){
 
     #Reading each line in file
     echo "-------------------------------------------------------------------"
+    
     echo "Reading file $file"
     while read -r ip; do 
         #Pass if line is empty or is "nan"
