@@ -1,25 +1,44 @@
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
+# from sklearn.ensemble import RandomForestClassifier
+from river import ensemble
+from river import tree
+from river import metrics
 import joblib
 import os
-from sklearn.preprocessing import LabelEncoder
 
 data_path = os.getenv("CSV_PREPROCESSED_BRIDGE")
 
 # Load your dataset
 data = pd.read_csv(data_path)
+rows = data.to_dict(orient="records")
 
-# Preprocess your data
-X = data.drop(columns=['label'])
-y = data['label']
+# Initialize the model
+model = ensemble.BaggingClassifier(
+    model=tree.HoeffdingTreeClassifier(), n_models=10, seed=27
+)
 
-# Initialize the Random Forest random_forest_model
-random_forest_model = RandomForestClassifier(n_estimators=100, random_state=42)
+# Initialize the metrics
+metric = metrics.Accuracy()
 
-# Train the random_forest_model on the entire dataset
-random_forest_model.fit(X, y)
+for row in rows:
+    X = {k: v for k, v in row.items() if k != "label"}
+    y = row["label"]
 
-# Save the model to a file
-model_filename = 'random_forest_model.joblib'
-joblib.dump(random_forest_model, model_filename)
-print(f'Model saved to {model_filename}')
+    # Make prediction
+    y_pred = model.predict_one(X)
+
+    # Learn from new data
+    model.learn_one(X, y)
+
+    # Update the metric
+    metric.update(y_true= y, y_pred= y_pred)
+
+# Print the accuracy
+print(f"Current accuracy score: {metric.get()}")
+
+# Save the model and metric to files
+model_filename = "model.joblib"
+metric_filename = "metric.joblib"
+joblib.dump(model, model_filename)
+joblib.dump(metric, metric_filename)
+print(f"Model and metric saved to {model_filename} and {metric_filename} respectively.")
