@@ -9,22 +9,38 @@ ip_column = ip_data["Src IP"]
 
 input_file = os.getenv("CSV_PREPROCESSED_BRIDGE")
 basename = os.path.basename(input_file)
-base_dir = os.getenv("CSV_ATTACKER_IPS_DIR")
-output_file = os.path.join(base_dir, f"attacker_ips_{basename}")
+base_dir = os.getenv("CSV_PREDICTED_DIR")
+output_file = os.path.join(base_dir, f"predicted_{basename}")
 
+# Read the data and add the 'Src IP' column
 data = pd.read_csv(input_file)
-# Load the model from the file
-model = joblib.load('random_forest_model.joblib')
-
-# Predict the label for the flows
-data['label'] = model.predict(data)
 data['Src IP'] = ip_column
 
-# Extract the ATTACKER ip address
-attacker_ip = data[data['label'] == 1]['Src IP']
+# Load the model from the file
+model = joblib.load('model.joblib')
 
-with open(output_file, "w") as file:
-    for ip in attacker_ip:
-        file.write(f"{ip}\n")
+# Create an empty list to store the predicted rows
+predicted_rows = []
 
+# Iterate through the DataFrame rows and predict the label for each row
+for _, row in data.iterrows():
+    # Prepare the features (X), excluding 'label' and 'Src IP'
+    X = {col: row[col] for col in data.columns if col not in ["label", "Src IP"]}
+    
+    # Predict the label for the current row
+    y_pred = model.predict_one(X)
 
+    # Assign the predicted label to the row
+    row["label"] = y_pred
+    
+    # Add the row to the list of predicted rows
+    predicted_rows.append(row)
+
+# Convert the list of predicted rows back to a DataFrame
+predicted_data = pd.DataFrame(predicted_rows)
+
+# Save the predicted data to the output file
+predicted_data.to_csv(output_file, index=False)
+
+# Print the output filename
+print(output_file)

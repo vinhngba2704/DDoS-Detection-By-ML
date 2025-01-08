@@ -1,13 +1,7 @@
-# Define directory and files
-export PCAP_DIR="./temp_storage/traffic" # Store raw PCAP files
-export CSV_DIR="./temp_storage/csv" # STore CSV files
-export CSV_EXTRACTED_DIR="./temp_storage/csv_extracted" # Store extracted CSV files
-export CSV_PREPROCESSED_DIR="./temp_storage/csv_preprocessed" # Store preprocessed CSV files
-export CSV_ATTACKER_IPS_DIR="./temp_storage/csv_attacker_ips" # Store attacker IP address CSV files
+# Load the parameters from parameter_initialization.sh
+source parameter_initialization.sh
 
-# Create directories
-mkdir -p $PCAP_DIR $CSV_DIR $CSV_EXTRACTED_DIR $CSV_PREPROCESSED_DIR $CSV_ATTACKER_IPS_DIR
-
+# The process of core_instructions.sh start from here
 while FILE=$(inotifywait -e close_write --format "%w%f" "$PCAP_DIR"); do
     BASENAME=$(basename "$FILE" .pcap)
 
@@ -24,26 +18,34 @@ while FILE=$(inotifywait -e close_write --format "%w%f" "$PCAP_DIR"); do
     # Extract features from csv file (6 features) to create a new csv file (30 features)
     export CSV_EXTRACTED_BRIDGE=$(python tool.py)
 
+    # Clone extracted csv file for further labeling
+    FILENAME=$(basename "$CSV_EXTRACTED_BRIDGE")
+    cp "$CSV_EXTRACTED_BRIDGE" "$CSV_CLONE_FOR_FURTHER_LABEL_DIR/$FILENAME.temp"
+    mv "$CSV_CLONE_FOR_FURTHER_LABEL_DIR/$FILENAME.temp" "$CSV_CLONE_FOR_FURTHER_LABEL_DIR/$FILENAME"
+
     # Preprocessing the csv file(Drop unneeded column + encoding)
     export CSV_PREPROCESSED_BRIDGE=$(python preprocessing.py)
 
-    # Predict the label of the csv file (30 features)
-    python3 model_inworking.py
+    # Predicting the label of the csv file (30 features)
+    export CSV_PREDICTED_BRIDGE=$(python model_inworking.py)
     if [[ $? -ne 0 ]]; then
         echo "Error: Model prediction failed for ${CSV_PREPROCESSED_BRIDGE}."
         continue
     fi
 
+    # Extracting the attacker ip addresses of the predicted csv file
+    python extracting_ip.py
+
     echo "Processing for ${BASENAME} completed successfully."
 
 done &
 
-# For tcpdump
-if [[ $# -eq 1 ]]; then 
-	NETWORK_INTERFACE=$1
-else
-	NETWORK_INTERFACE=eth0
-fi
+# Block with CS tool
+
+
+
+
+
 
 # Capture packets from a network interface every 5s
 echo "Start capturing packets from network interface $NETWORK_INTERFACE"
