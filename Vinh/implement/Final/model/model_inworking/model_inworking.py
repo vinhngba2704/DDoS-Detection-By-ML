@@ -17,30 +17,13 @@ data = pd.read_csv(input_file)
 data['Src IP'] = ip_column
 
 # Load the model from the file
-model = joblib.load('model.joblib')
+model = joblib.load('random_forest_model.joblib')
 
-# Create an empty list to store the predicted rows
-predicted_rows = []
-
-# Iterate through the DataFrame rows and predict the label for each row
-for _, row in data.iterrows():
-    # Prepare the features (X), excluding 'label' and 'Src IP'
-    X = {col: row[col] for col in data.columns if col not in ["label", "Src IP"]}
-    
-    # Predict the label for the current row
-    y_pred = model.predict_one(X)
-
-    # Assign the predicted label to the row
-    row["label"] = y_pred
-    
-    # Add the row to the list of predicted rows
-    predicted_rows.append(row)
-
-# Convert the list of predicted rows back to a DataFrame
-predicted_data = pd.DataFrame(predicted_rows)
+label_pred = model.predict(data.drop(columns=["Src IP"]))
+data["label"] = label_pred
 
 # Save the predicted data to the output file
-predicted_data.to_csv(output_file, index=False)
+data.to_csv(output_file, index=False)
 
 # Print the output filename
 print(output_file)
