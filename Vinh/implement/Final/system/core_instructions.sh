@@ -1,5 +1,6 @@
+#!/bin/bash
 # Load the parameters from parameter_initialization.sh
-source parameter_initialization.sh
+. ./parameter_initialization.sh
 
 # The process of core_instructions.sh start from here
 while FILE=$(inotifywait -e close_write --format "%w%f" "$PCAP_DIR"); do

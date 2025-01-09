@@ -1,3 +1,4 @@
+#!/bin/bash
 # Define directory and files
 export PCAP_DIR="./temp_storage/traffic"
 export CSV_DIR="./temp_storage/csv"

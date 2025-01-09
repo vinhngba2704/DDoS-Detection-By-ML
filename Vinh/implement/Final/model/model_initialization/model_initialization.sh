@@ -1,4 +1,4 @@
-PCAP_FILE="/media/Personal/Project/DDoS_attack/Data/InternalData/20241220/fw1.pcap"
+PCAP_FILE="/media/Personal/Project/DDoS_attack/Data/InternalData/20241227-20250108T155938Z-001/20241227/fw1.pcap"
 BASENAME=$(basename "$PCAP_FILE" .pcap)
 tshark -r $PCAP_FILE \
         -T fields -e _ws.col.No. \
@@ -25,3 +25,7 @@ echo "Preprocessing completed."
 # Model initialization
 python model_initialization.py
 echo "Model initialization completed."
+
+# Copy model to system
+cp random_forest_model.joblib ../../system/
+echo "Copied model to system"
