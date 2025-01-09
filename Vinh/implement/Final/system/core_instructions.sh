@@ -42,11 +42,6 @@ done &
 
 # Block with CS tool
 
-
-
-
-
-
 # Capture packets from a network interface every 5s
 echo "Start capturing packets from network interface $NETWORK_INTERFACE"
 sudo tcpdump -i $NETWORK_INTERFACE -G 5 -w "${PCAP_DIR}/traffic-%Y-%m-%d-%H-%M-%S.pcap"
