@@ -17,6 +17,7 @@ ips_to_keep = [ #Attacker
     "192.168.1.124", "192.168.1.147", "192.168.1.114", "192.168.1.25"]
 
 new_df_train = df_train[df_train['Src IP'].isin(ips_to_keep)].copy()
+# new_df_train = df_train.copy()
 
 benign_ips = ["192.168.1.124", "192.168.1.147", "192.168.1.114", "192.168.1.25"]
 new_df_train['label'] = 'ATTACKER'

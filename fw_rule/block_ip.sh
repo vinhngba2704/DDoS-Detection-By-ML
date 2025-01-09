@@ -30,9 +30,13 @@ read_and_add_ips(){
         if [[ -z "$ip" || "$ip" == "nan" ]]; then
             continue
         fi
-        #if the IP already exist in set it will reset the timeout 
-        sudo ipset add $ipset_name $ip -exist
-        echo "Added $ip to the blacklist"
+        #exist -> return 0, non-exist -> other 
+        if ! sudo ipset test $ipset_name $ip &>/dev/null; then
+            sudo ipset add $ipset_name $ip
+            echo "Added $ip to the blacklist"
+        else
+            echo "IP $ip already exists, skipping."
+        fi
     done < "$file"
 }
 
