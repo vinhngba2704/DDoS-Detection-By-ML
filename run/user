@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+echo -n "User Profile #$1 - "
+case "$1" in
+	1)
+		echo "Random, manual refresh"
+		echo "No script available. Exiting..."
+		;;
+	2)
+		echo "Low traffic (1 sec interval between each request)"
+		while true; do
+			curl 192.168.56.103
+			sleep 1
+		done
+		;;
+	3)
+		echo "Medium traffic (0.5 sec interval between each request)"
+		while true; do
+			curl 192.168.56.103
+			sleep 0.5
+		done
+		;;
+	4)
+		echo "High traffic (0.1 sec interval between each request)"
+		while true; do
+			curl 192.168.56.103
+			sleep 0.1
+		done
+		;;
+	*)
+		echo ""
+		echo "Invalid option. Available options: 1 (not in use), 2, 3, 4"
+		echo "Exiting..."
+		;;
+esac
+#		echo -e "Invalid option. Usage: \033[01;32m./user \033[01;37m"
